@@ -1,8 +1,8 @@
 # oculus_reader
 
-## Note on Maintenance
+## ⚠️ Oculus Reader development has moved
 
-For Quest 3 support and active maintenance, please see the fork at https://github.com/jborbik/oculus_reader.
+For **Quest 3 support and active maintenance**, please see the fork at https://github.com/jborbik/oculus_reader.
 
 ------------
 
