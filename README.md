@@ -1,8 +1,25 @@
 # oculus_reader
 
+This is the active maintenance fork of the RAIL lab's oculus_reader. This version adds support for Quest 3 and updated OpenXR SDKs.
+
+## ⚠️ Project Status: Quest 3 Support (Beta)
+
+**Active Development:** I am the original creator of `oculus_reader`. I have launched this fork to provide support for the **Meta Quest 3** and modern OpenXR standards.
+
+**Hardware Pledge:** Development for Quest 3 is currently ongoing. I am seeking a hardware pledge for integration testing to ensure a stable release.
+
+**Support the Development:**
+*   **PayPal (EUR):** [paypal.me/JBOrbik](https://paypal.me/JBOrbik)
+*   **PayPal (USD):** [paypal.me/JedrzejOrbik](https://paypal.me/JedrzejOrbik)
+
+Until the hardware is secured, please create issues if the software does not behave on-par with the original implementation from [rail-berkeley/oculus_reader](https://github.com/rail-berkeley/oculus_reader).
+
+-------------------
+
+# Original README from [rail-berkeley/oculus_reader](https://github.com/rail-berkeley/oculus_reader):
 This repository provides the tool to read the position and pressed button from the Oculus Quest device.
 
-Oculus reader consits of two elements: python script which receives the readings from the APK and the APK itself. Currently the pose of the controllers and pressed buttons are transfered from the APK. This behavior can be extended using provided APK [source code](app_source).
+Oculus reader consits of two elements: python script which receives the readings from the APK and the APK itself. Currently the pose of the controllers and pressed buttons are transfered from the APK. This behavior can be extended using provided APK [source code](app).
 
 ## Clone the repository
 
@@ -19,7 +36,7 @@ Now you can clone this repository either with HTTPS or SSH.
 If you decide to use the HTTPS protocol, you can reduce the number of authentification prompts when pushing/pulling caused by Git LFS with:
 
 ```bash
-git config lfs.https://github.com/rail-berkeley/oculus_reader.git/info/lfs.locksverify false
+git config lfs.https://github.com/jborbik/oculus_reader.git/info/lfs.locksverify false
 ```
 
 This command has to be run from the repository workspace.
@@ -34,9 +51,12 @@ To install ADB on Ubuntu run:
 sudo apt install android-tools-adb
 ```
 
-On other systems follow the steps from the 'app_source' folder.
+On other systems follow the steps from the 'app' folder.
 
 ### Set up of a new Oculus Quest device
+
+[!WARNING]
+This section needs to be updated.
 
 1. Determine your Oculus Quest account name:
 If you haven’t used Oculus Quest before, start it and follow the steps to create your profile and get yourself started. Otherwise follow these steps to find out your username:
@@ -63,7 +83,7 @@ If you haven’t used Oculus Quest before, start it and follow the steps to crea
 
 ## How to run the code
 
-If you intend to use the precompiled APK with the predefined behavior, where the position and the pressed buttons are transferred, please follow the steps from the [scripts folder](oculus_reader/README.md). If you plan to extend the app, please read the README from the [app_source folder](app_source/README.md).
+If you intend to use the precompiled APK with the predefined behavior, where the position and the pressed buttons are transferred, please follow the steps from the [scripts folder](oculus_reader/README.md). If you plan to extend the app, please read the README from the [app folder](app/README.md).
 
 ### Communication using the USB cable (easier to set up)
 
