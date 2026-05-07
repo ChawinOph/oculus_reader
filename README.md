@@ -1,5 +1,11 @@
 # oculus_reader
 
+## Note on Maintenance
+
+For Quest 3 support and active maintenance, please see the fork at https://github.com/jborbik/oculus_reader.
+
+------------
+
 This repository provides the tool to read the position and pressed button from the Oculus Quest device.
 
 Oculus reader consits of two elements: python script which receives the readings from the APK and the APK itself. Currently the pose of the controllers and pressed buttons are transfered from the APK. This behavior can be extended using provided APK [source code](app_source).
