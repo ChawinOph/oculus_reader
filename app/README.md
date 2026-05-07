@@ -6,13 +6,12 @@ This folder includes the source code of the Oculus Quest APK delivered in the re
 
 - (Mac only) Install Xcode
 - Install Android development studio. On Ubuntu you can run `sudo snap install android-studio --classic`, otherwise follow: <https://developer.android.com/studio>
-- Select *File -> Open...*, select the local path of the repo, and open: app/build.gradle
+- Select *File -> Open...*, find the local path of the repo and open: app/build.gradle
 - (Windows only) Install drivers https://developer.oculus.com/downloads/package/oculus-adb-drivers/
 
 ### Development
 
-- Select *Open an Existing Project*, find the repository path, and open: app/build.gradle
-- The source code resides in the 'app' folder.
+- The source code resides in the 'src/' directory.
 - When ready, build the APK with menu Build -> Build App Bundle(s) / APK(s) -> Build APK(s). Locate file and replace the APK in the oculus_reader's APK directory.
 - Reinstall APK with `python oculus_reader/install.py --reinstall`
 

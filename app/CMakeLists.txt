@@ -22,16 +22,15 @@ add_subdirectory(${META_SDK_SAMPLES_DIR}/3rdParty ${CMAKE_BINARY_DIR}/meta_3rdpa
 add_subdirectory(${META_SDK_SAMPLES_DIR}/SampleXrFramework ${CMAKE_BINARY_DIR}/meta_framework)
 
 # --- Project Source Files ---
-# Using the files copied to the current directory
 set(SRC_FILES
-    main.cpp
-    Remotes.h
+    src/main.cpp
+    src/Remotes.h
 )
 
 # --- Build Target ---
 if(ANDROID)
     add_library(${PROJECT_NAME} MODULE ${SRC_FILES})
-    
+
     # Standard Android and SDK libraries
     target_link_libraries(${PROJECT_NAME} PRIVATE
         android
@@ -41,18 +40,18 @@ if(ANDROID)
         ktx
         samplexrframework
     )
-    
+
     # Required for NativeActivity linkage
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-u ANativeActivity_onCreate")
-    
+
     # Ensure NDK glue is found
     target_include_directories(${PROJECT_NAME} PUBLIC ${ANDROID_NDK}/sources/android/native_app_glue)
-    
+
 elseif(WIN32)
     add_executable(${PROJECT_NAME} ${SRC_FILES})
     target_link_libraries(${PROJECT_NAME} PRIVATE samplexrframework)
     add_definitions(-D_USE_MATH_DEFINES)
-    
+
     # Assets handling for Windows: copy from the fetched SDK sample folder
     add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_directory
@@ -62,4 +61,4 @@ elseif(WIN32)
 endif()
 
 # --- Common Configuration ---
-target_include_directories(${PROJECT_NAME} PRIVATE .)
+target_include_directories(${PROJECT_NAME} PRIVATE src)
