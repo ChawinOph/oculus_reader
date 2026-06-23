@@ -58,7 +58,10 @@ PFN_xrGetDeviceSampleRateFB xrGetDeviceSampleRateFB = nullptr;
 class OculusTeleopApp : public OVRFW::XrApp {
    public:
     OculusTeleopApp() : OVRFW::XrApp() {
-        BackgroundColor = OVR::Vector4f(0.60f, 0.95f, 0.4f, 1.0f);
+        // Transparent clear (alpha 0) so the passthrough layer beneath shows through the
+        // eye buffers. This opaque green used to fill the whole view — that was the
+        // "blank VR screen" seen during teleop.
+        BackgroundColor = OVR::Vector4f(0.0f, 0.0f, 0.0f, 0.0f);
         OpenXRVersion = XR_API_VERSION_1_1;
     }
 
@@ -103,6 +106,7 @@ Function to create PCM samples from an array of amplitudes, frequency and durati
         std::vector<const char*> extensions = XrApp::GetExtensions();
         extensions.push_back(XR_FB_HAPTIC_AMPLITUDE_ENVELOPE_EXTENSION_NAME);
         extensions.push_back(XR_FB_HAPTIC_PCM_EXTENSION_NAME);
+        extensions.push_back(XR_FB_PASSTHROUGH_EXTENSION_NAME);  // see-through background
                 return extensions;
     }
 
@@ -795,13 +799,51 @@ Function to create PCM samples from an array of amplitudes, frequency and durati
         }
         beamRenderer_.Init(GetFileSys(), nullptr, OVR::Vector4f(1.0f), 1.0f);
 
+        /// Passthrough: resolve fn pointers, create + start the layer so the real world
+        /// shows through wherever the eye buffer is transparent (see PreProjectionAddLayer).
+        InitPassthrough();
+
         /// enumerate all actions
         EnumerateActions();
 
         return true;
     }
 
+    // Resolve the FB_passthrough entry points and create + start passthrough plus a
+    // reconstruction layer. Called from SessionInit (needs a valid Session).
+    void InitPassthrough() {
+        OXR(xrGetInstanceProcAddr(GetInstance(), "xrCreatePassthroughFB",
+                                  (PFN_xrVoidFunction*)(&xrCreatePassthroughFB_)));
+        OXR(xrGetInstanceProcAddr(GetInstance(), "xrDestroyPassthroughFB",
+                                  (PFN_xrVoidFunction*)(&xrDestroyPassthroughFB_)));
+        OXR(xrGetInstanceProcAddr(GetInstance(), "xrCreatePassthroughLayerFB",
+                                  (PFN_xrVoidFunction*)(&xrCreatePassthroughLayerFB_)));
+        OXR(xrGetInstanceProcAddr(GetInstance(), "xrDestroyPassthroughLayerFB",
+                                  (PFN_xrVoidFunction*)(&xrDestroyPassthroughLayerFB_)));
+        if (xrCreatePassthroughFB_ == nullptr || xrCreatePassthroughLayerFB_ == nullptr) {
+            ALOG("[passthrough] entry points unavailable — is XR_FB_passthrough enabled?");
+            return;
+        }
+        XrPassthroughCreateInfoFB ptci = {XR_TYPE_PASSTHROUGH_CREATE_INFO_FB};
+        ptci.flags = XR_PASSTHROUGH_FLAG_IS_RUNNING_AT_CREATION_BIT_FB;
+        OXR(xrCreatePassthroughFB_(Session, &ptci, &passthrough_));
+        XrPassthroughLayerCreateInfoFB plci = {XR_TYPE_PASSTHROUGH_LAYER_CREATE_INFO_FB};
+        plci.passthrough = passthrough_;
+        plci.purpose = XR_PASSTHROUGH_LAYER_PURPOSE_RECONSTRUCTION_FB;
+        plci.flags = XR_PASSTHROUGH_FLAG_IS_RUNNING_AT_CREATION_BIT_FB;
+        OXR(xrCreatePassthroughLayerFB_(Session, &plci, &passthroughLayer_));
+        ALOG("[passthrough] created + started");
+    }
+
     virtual void SessionEnd() override {
+        if (passthroughLayer_ != XR_NULL_HANDLE && xrDestroyPassthroughLayerFB_ != nullptr) {
+            OXR(xrDestroyPassthroughLayerFB_(passthroughLayer_));
+            passthroughLayer_ = XR_NULL_HANDLE;
+        }
+        if (passthrough_ != XR_NULL_HANDLE && xrDestroyPassthroughFB_ != nullptr) {
+            OXR(xrDestroyPassthroughFB_(passthrough_));
+            passthrough_ = XR_NULL_HANDLE;
+        }
         controllerRenderL_.Shutdown();
         controllerRenderR_.Shutdown();
         beamRenderer_.Shutdown();
@@ -1131,6 +1173,21 @@ Function to create PCM samples from an array of amplitudes, frequency and durati
         beamRenderer_.Render(in, out);
     }
 
+    // Inject the passthrough layer UNDERNEATH the projection layer each frame, so the
+    // transparent regions of the eye buffer reveal the real world. This is the OVRFW hook
+    // used by Meta's XrSamples/XrPassthrough. If your fetched SDK's XrApp.h declares it
+    // with a different signature, match that (grep the SDK for "PreProjectionAddLayer").
+    virtual void PreProjectionAddLayer(xrCompositorLayerUnion* layers, int& layerCount) override {
+        if (passthroughLayer_ == XR_NULL_HANDLE) {
+            return;
+        }
+        XrCompositionLayerPassthroughFB ptLayer = {XR_TYPE_COMPOSITION_LAYER_PASSTHROUGH_FB};
+        ptLayer.layerHandle = passthroughLayer_;
+        ptLayer.flags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+        ptLayer.space = XR_NULL_HANDLE;
+        layers[layerCount++].Passthrough = ptLayer;
+    }
+
     void EnumerateActions() {
         // Enumerate actions
         XrPath actionPathsBuffer[16];
@@ -1306,6 +1363,14 @@ Function to create PCM samples from an array of amplitudes, frequency and durati
     OVRFW::TinyUI ui_;
     OVRFW::SimpleBeamRenderer beamRenderer_;
     std::vector<OVRFW::ovrBeamRenderer::handle_t> beams_;
+
+    // --- Passthrough (XR_FB_passthrough) ---
+    XrPassthroughFB passthrough_ = XR_NULL_HANDLE;
+    XrPassthroughLayerFB passthroughLayer_ = XR_NULL_HANDLE;
+    PFN_xrCreatePassthroughFB xrCreatePassthroughFB_ = nullptr;
+    PFN_xrDestroyPassthroughFB xrDestroyPassthroughFB_ = nullptr;
+    PFN_xrCreatePassthroughLayerFB xrCreatePassthroughLayerFB_ = nullptr;
+    PFN_xrDestroyPassthroughLayerFB xrDestroyPassthroughLayerFB_ = nullptr;
 
     OVRFW::VRMenuObject* bigText_ = nullptr;
     OVRFW::VRMenuObject* ipText_ = nullptr;
